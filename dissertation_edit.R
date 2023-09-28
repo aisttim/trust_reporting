@@ -1,4 +1,4 @@
-#rm(list = ls()) 
+rm(list = ls()) 
 
 #Library ####
 pacman::p_load(haven, dplyr, ggplot2, GGally, lavaan,
@@ -513,7 +513,7 @@ tab_model(m1, m2, m3, m4,
           digits = 2,
           p.style = c("stars"),
           CSS = css_theme("regression") 
-          # file = "regression_table.doc"
+          #file = "regression_table.doc"
 )
 
 
@@ -580,23 +580,22 @@ lrtest(m3, m4)
 #Reject H0 - full model predictors offer a 
 #significant improvement in fit over the model with just situational characteristics.
 
-#Full model (Model 4) accuracy 
-response_pr_1 <- round(predict(m4, csew_full, type = "response"), 3)
+#Full model (Model 4) accuracy
+predicted_1 <- round(predict(m4, csew_full, type = "response"), 3)
 #Confusion matrix
-confusion_matrix_1 <- table(csew_full$reported, round(response_pr_1))
-confusion_matrix_1 
+confusion_matrix_1 <- table(csew_full$reported, round(predicted_1))
+confusion_matrix_1
 
 #Accuracy rate
 accuracy <- function(x){
   sum(diag(x) / (sum(rowSums(x)))) * 100
 }
+accuracy(confusion_matrix_1) #74%
 
-accuracy(confusion_matrix_1) #74.05% accuracy
-
-#Full model sensitivity analysis 
-#conventional cutoff = 0.5
+#Full model sensitivity analysis
+#Conventional cut-off = 0.5
 precision<-function(c) {
-  tab1 <- table(response_pr_1>c, csew_full$reported)
+  tab1 <- table(predicted_1>c, csew_full$reported)
   out <- diag(tab1)/apply(tab1, 2, sum)
   names(out) <- c('specificity', 'sensitivity')
   list(tab1, out)
@@ -605,27 +604,22 @@ precision(.5)
 #sensitivity 2%
 
 #ROC curve
-rocCURVE <- roc(response = csew_full$reported, 
-                predictor = response_pr_1)
-plot(rocCURVE, legacy.axes = TRUE)
+roc1 <- pROC::roc(reported ~ predicted_1, data = csew_full, plot=T)
+
 
 #Select optimal cut off point
 #Maximise sensitivity
-cutoff_point <- coords(rocCURVE, x = "best", best.method = "closest.topleft")
-cutoff_point 
+cutoff_point <- coords(roc1, x = "best", best.method = "closest.topleft")
+cutoff_point
 #sensitivity 60%
+#threshold 25%
 
-#Based on Youden index 
-#Maximise both sensitivity and specificity 
-cutoff_point1 <- coords(rocCURVE,  x ="best", best.method = "youden")
-cutoff_point1 
+#Based on Youden index
+#Maximise both sensitivity and specificity
+cutoff_point1 <- coords(roc1, x ="best", best.method = "youden")
+cutoff_point1
 #sensitivity 45%
-
-#Plot both methods 
-plot(rocCURVE, print.thres="best", print.thres.best.method="youden")
-plot(rocCURVE, print.thres="best", print.thres.best.method="closest.topleft",
-     add = TRUE)
-
+#threshold 29%
 #####
 
 #Logistic regression - one factor trust ####
@@ -686,7 +680,7 @@ tab_model(m1_t, m2_t, m3_t, m4_t,
           digits = 2,
           p.style = c("stars"),
           CSS = css_theme("regression") 
-          # file = "regression_table_one_factor.doc"
+         # file = "regression_table_one_factor.doc"
 )
 
 #Model fit statistics 
@@ -740,51 +734,44 @@ NagelkerkeR2(m4_t) #5.59%
 
 #Tjur's R2 calculated in table output 
 
-#Full model (Model 4) accuracy 
-response_pr_2 <- round(predict(m4_t, csew_full, type = "response"), 3)
+#Full model (Model 4) accuracy
+predicted_2 <- round(predict(m4_t, csew_full, type = "response"), 3)
 #Confusion matrix
-confusion_matrix_2 <- table(csew_full$reported, round(response_pr_2))
-confusion_matrix_2 
+confusion_matrix_2 <- table(csew_full$reported, round(predicted_2))
+confusion_matrix_2
 
 #Accuracy rate
-accuracy1 <- function(x){
+accuracy <- function(x){
   sum(diag(x) / (sum(rowSums(x)))) * 100
 }
+accuracy(confusion_matrix_2) #74%
 
-accuracy(confusion_matrix_2) #74.10% accuracy 
-
-#Full model sensitivity analysis 
-#conventional cutoff = 0.5
-precision1 <- function(c) {
-  tab2 <- table(response_pr_2>c, csew_full$reported)
-  out1 <- diag(tab2)/apply(tab2, 2, sum)
-  names(out1) <- c('specificity', 'sensitivity')
-  list(tab2, out1)
+#Full model sensitivity analysis
+#Conventional cut-off = 0.5
+precision<-function(c) {
+  tab1 <- table(predicted_2>c, csew_full$reported)
+  out <- diag(tab1)/apply(tab1, 2, sum)
+  names(out) <- c('specificity', 'sensitivity')
+  list(tab1, out)
 }
-precision1(.5) 
+precision(.5) 
 #sensitivity 2%
 
 #ROC curve
-rocCURVE1 <- roc(response = csew_full$reported, 
-                predictor = response_pr_2)
-plot(rocCURVE1, legacy.axes = TRUE)
+roc2 <- pROC::roc(reported ~ predicted_2, data = csew_full, plot=T)
 
 #Select optimal cut off point
 #Maximise sensitivity
-cutoff_point2 <- coords(rocCURVE1, x = "best", best.method = "closest.topleft")
-cutoff_point2 
+cutoff_point_trust1 <- coords(roc2, x = "best", best.method = "closest.topleft")
+cutoff_point_trust1
 #sensitivity 62%
+#threshold 25%
 
 #Based on Youden index 
 #Maximise both sensitivity and specificity 
-cutoff_point3 <- coords(rocCURVE1,  x ="best", best.method = "youden")
-cutoff_point3
+cutoff_point_trust2 <- coords(roc2,  x ="best", best.method = "youden")
+cutoff_point_trust2
 #sensitivity 46%
-
-#Plot both methods 
-plot(rocCURVE1, print.thres="best", print.thres.best.method="youden")
-plot(rocCURVE1, print.thres="best", print.thres.best.method="closest.topleft",
-     add = TRUE)
-
+#threshold 29%
 #####
 
